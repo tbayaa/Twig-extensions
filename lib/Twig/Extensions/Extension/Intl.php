@@ -97,9 +97,15 @@ function twig_localized_number_filter($number, $style = 'decimal', $type = 'defa
 
 function twig_localized_currency_filter($number, $currency = null, $locale = null)
 {
-    $formatter = twig_get_number_formatter($locale, 'currency');
+    /* issue: https://bugs.php.net/bug.php?id=63140
+       dirty solution: https://stackoverflow.com/a/19299000
+       TLDR: We need to either use full locaole and set FRACTION_DIGITS or replace the output
+       (c) to azaleas */
 
-    return $formatter->formatCurrency($number, $currency);
+    $formatter = twig_get_number_formatter($locale, 'currency');
+    $formattedCurrency = preg_replace('/[,\.]00$/', '', $formatter->formatCurrency($number, $currency));
+
+    return trim(preg_replace('/(\d+)/', ' ${1} ', $formattedCurrency));
 }
 
 /**
